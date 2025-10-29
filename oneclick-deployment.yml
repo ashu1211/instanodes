@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: oneclick-backend-stage-container
+  namespace: instanode
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: oneclick-backend-stage
+  template:
+    metadata:
+      labels:
+        app: oneclick-backend-stage
+    spec:
+      containers:
+        - name: oneclick-backend-stage
+          image: swr.la-north-2.myhuaweicloud.com/instanodes-organization/oneclick-backend:v1.2.7
+          ports:
+            - containerPort: 3004
+          envFrom:
+            - configMapRef:
+                name: oneclick-backend-stage-config
+          resources:
+            requests:
+              cpu: '100m'
+              memory: '128Mi'
+            limits:
+              cpu: '500m'
+              memory: '512Mi'
+          startupProbe:
+            httpGet:
+              path: /one-click/health
+              port: 3004
+            failureThreshold: 12
+            periodSeconds: 5
+            timeoutSeconds: 2
+          livenessProbe:
+            httpGet:
+              path: /one-click/health
+              port: 3004
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /one-click/health
+              port: 3004
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+      imagePullSecrets:
+        - name: default-secret
+      restartPolicy: Always
